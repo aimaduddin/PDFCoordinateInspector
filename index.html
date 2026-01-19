@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Coordinate Inspector</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    .drop-zone.drag-over {
+      border-color: #3b82f6;
+      background-color: #eff6ff;
+    }
+    #coordinate-tooltip {
+      pointer-events: none;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <div class="container mx-auto px-4 py-6 max-w-7xl">
+    <header class="mb-6">
+      <h1 class="text-2xl font-bold text-gray-800">PDF Coordinate Inspector</h1>
+      <p class="text-gray-600 text-sm mt-1">Upload a PDF and inspect cursor coordinates in multiple units</p>
+    </header>
+
+    <div id="upload-section" class="mb-6">
+      <div id="drop-zone" class="drop-zone border-2 border-dashed border-gray-400 rounded-lg p-12 text-center cursor-pointer bg-white hover:border-blue-500 transition-colors">
+        <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+        </svg>
+        <p class="text-lg text-gray-700 font-medium">Drop PDF here or click to upload</p>
+        <p class="text-sm text-gray-500 mt-2">Maximum file size: 10 MB</p>
+        <input type="file" id="file-input" accept=".pdf" class="hidden">
+      </div>
+      <p id="error-message" class="mt-2 text-red-600 text-sm hidden"></p>
+    </div>
+
+    <div id="viewer-section" class="hidden">
+      <div class="flex flex-col lg:flex-row gap-6">
+        <div class="flex-1">
+          <div id="pdf-container" class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <canvas id="pdf-canvas" class="block mx-auto"></canvas>
+          </div>
+        </div>
+
+        <div class="lg:w-72 space-y-4">
+          <div class="bg-white rounded-lg shadow-lg p-4">
+            <h3 class="font-semibold text-gray-700 mb-3">Units</h3>
+            <div class="space-y-2">
+              <label class="flex items-center">
+                <input type="checkbox" id="unit-px" class="mr-2 text-blue-600">
+                <span class="text-gray-700">Pixels (px)</span>
+              </label>
+              <label class="flex items-center">
+                <input type="checkbox" id="unit-pt" checked class="mr-2 text-blue-600">
+                <span class="text-gray-700">Points (pt)</span>
+              </label>
+              <label class="flex items-center">
+                <input type="checkbox" id="unit-in" class="mr-2 text-blue-600">
+                <span class="text-gray-700">Inches (in)</span>
+              </label>
+              <label class="flex items-center">
+                <input type="checkbox" id="unit-cm" class="mr-2 text-blue-600">
+                <span class="text-gray-700">Centimeters (cm)</span>
+              </label>
+              <label class="flex items-center">
+                <input type="checkbox" id="unit-mm" class="mr-2 text-blue-600">
+                <span class="text-gray-700">Millimeters (mm)</span>
+              </label>
+              <label class="flex items-center">
+                <input type="checkbox" id="unit-pc" class="mr-2 text-blue-600">
+                <span class="text-gray-700">Picas (pc)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg shadow-lg p-4">
+            <h3 class="font-semibold text-gray-700 mb-3">Origin</h3>
+            <div class="space-y-2">
+              <label class="flex items-center">
+                <input type="radio" name="origin" value="bottom-left" class="mr-2 text-blue-600">
+                <span class="text-gray-700">Bottom-Left (PDF)</span>
+              </label>
+              <label class="flex items-center">
+                <input type="radio" name="origin" value="top-left" checked class="mr-2 text-blue-600">
+                <span class="text-gray-700">Top-Left (Screen)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg shadow-lg p-4">
+            <h3 class="font-semibold text-gray-700 mb-3">Page Info</h3>
+            <div id="page-info" class="text-sm text-gray-600">
+              <p>Size: <span id="page-size">-</span></p>
+              <p>Rotation: <span id="page-rotation">0°</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 bg-white rounded-lg shadow-lg p-4 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <button id="zoom-out" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-gray-700 font-medium">−</button>
+          <span id="zoom-level" class="min-w-16 text-center text-gray-700">100%</span>
+          <button id="zoom-in" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-gray-700 font-medium">+</button>
+          <button id="zoom-fit" class="ml-2 px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-gray-700 text-sm">Fit</button>
+          <button id="zoom-100" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-gray-700 text-sm">100%</button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button id="prev-page" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-gray-700 font-medium">◄</button>
+          <span class="text-gray-700">Page <input type="number" id="page-input" min="1" class="w-16 text-center border rounded py-1 mx-1"> of <span id="page-count">-</span></span>
+          <button id="next-page" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-gray-700 font-medium">►</button>
+        </div>
+
+        <button id="reset-view" class="px-4 py-1 bg-blue-600 hover:bg-blue-700 rounded text-white text-sm">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="coordinate-tooltip" class="fixed hidden bg-gray-900 text-white text-xs rounded-lg shadow-xl p-3 min-w-40">
+    <div id="tooltip-content"></div>
+  </div>
+
+  <script src="js/unit-converter.js"></script>
+  <script src="js/pdf-renderer.js"></script>
+  <script src="js/coordinate-tracker.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

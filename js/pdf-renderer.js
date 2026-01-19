@@ -4,6 +4,7 @@ const PDFRenderer = {
   currentScale: 1,
   pageViewport: null,
   devicePixelRatio: window.devicePixelRatio || 1,
+  currentPageObj: null,
 
   canvas: null,
   ctx: null,
@@ -31,6 +32,7 @@ const PDFRenderer = {
 
     try {
       const page = await this.pdfDoc.getPage(pageNum);
+      this.currentPageObj = page;
       this.pageViewport = page.getViewport({ scale: scale * this.devicePixelRatio });
 
       const width = this.pageViewport.width / this.devicePixelRatio;
@@ -99,8 +101,13 @@ const PDFRenderer = {
     this.currentPage = 1;
     this.currentScale = 1;
     this.pageViewport = null;
+    this.currentPageObj = null;
     if (this.ctx) {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
+  },
+
+  getCurrentPageObj() {
+    return this.currentPageObj;
   }
 };

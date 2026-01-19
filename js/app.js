@@ -4,9 +4,11 @@ const App = {
   init() {
     PDFRenderer.init();
     CoordinateTracker.init();
+    FontDetector.init();
     this.setupUploadHandlers();
     this.setupControlHandlers();
     this.setupKeyboardNavigation();
+    this.setupFontDetection();
   },
 
   setupUploadHandlers() {
@@ -79,6 +81,12 @@ const App = {
     const pageNum = PDFRenderer.getCurrentPage();
     const scale = PDFRenderer.getScale();
     const pageInfo = await PDFRenderer.renderPage(pageNum, scale);
+    
+    const pageObj = PDFRenderer.getCurrentPageObj();
+    if (pageObj) {
+      await FontDetector.loadPageText(pageObj);
+      this.updateFontInfoPanel();
+    }
     
     this.updatePageInfo(pageInfo);
     this.updateZoomDisplay();
@@ -154,6 +162,7 @@ const App = {
 
   uploadNew() {
     PDFRenderer.reset();
+    FontDetector.reset();
     document.getElementById('viewer-section').classList.add('hidden');
     document.getElementById('upload-section').classList.remove('hidden');
     document.getElementById('file-input').value = '';
@@ -162,6 +171,7 @@ const App = {
     document.getElementById('page-rotation').textContent = '0°';
     document.getElementById('page-input').value = '';
     document.getElementById('zoom-level').textContent = '100%';
+    document.getElementById('font-info').innerHTML = '<p>Click on PDF to detect font</p>';
   },
 
   showViewer() {
@@ -187,6 +197,57 @@ const App = {
         this.changeZoom(-0.25);
       }
     });
+  },
+
+  setupFontDetection() {
+    const canvas = document.getElementById('pdf-canvas');
+    canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
+  },
+
+  handleCanvasClick(e) {
+    const canvas = document.getElementById('pdf-canvas');
+    const canvasRect = canvas.getBoundingClientRect();
+    const scale = PDFRenderer.getScale();
+    const devicePixelRatio = PDFRenderer.devicePixelRatio || 1;
+
+    const rawX = e.clientX - canvasRect.left;
+    const rawY = e.clientY - canvasRect.top;
+
+    const pdfX = rawX / scale / devicePixelRatio;
+    const pdfY = rawY / scale / devicePixelRatio;
+
+    const origin = CoordinateTracker.origin;
+    const pageDimensions = PDFRenderer.getPageDimensions();
+    const pageHeight = pageDimensions.height;
+
+    let finalY = pdfY;
+    if (origin === 'bottom-left') {
+      finalY = pageHeight - pdfY;
+    }
+
+    const fontInfo = FontDetector.getFontSize(pdfX, finalY, scale);
+    this.updateFontInfoPanel(fontInfo, pdfX, finalY);
+  },
+
+  updateFontInfoPanel(fontInfo, x, y) {
+    const fontInfoPanel = document.getElementById('font-info');
+    
+    if (!fontInfo) {
+      fontInfoPanel.innerHTML = `<p>No font detected at this position</p>
+        <p class="text-gray-400 mt-1">Position: ${x.toFixed(1)}, ${y.toFixed(1)} pt</p>`;
+      return;
+    }
+
+    const fontSize = (fontInfo.fontSize * 72 / 72).toFixed(2);
+    
+    fontInfoPanel.innerHTML = `
+      <div class="space-y-2">
+        <div><strong>Font Size:</strong> ${fontSize} pt</div>
+        <div><strong>Font Family:</strong> ${fontInfo.fontFamily}</div>
+        <div><strong>Font Name:</strong> ${fontInfo.fontName}</div>
+        <div class="text-gray-400 text-xs mt-2">Position: ${x.toFixed(1)}, ${y.toFixed(1)} pt</div>
+      </div>
+    `;
   }
 };
 

@@ -11,6 +11,7 @@ A web-based tool for inspecting precise cursor coordinates within PDF documents.
 - **Real-time Coordinates**: Hover over the PDF to see cursor position
 - **Multiple Units**: Display coordinates in px, pt, in, cm, mm, pc (selectable)
 - **Origin Toggle**: Switch between PDF standard (bottom-left) and screen standard (top-left)
+- **Font Detection**: Click on PDF to detect font size and family at that position
 - **High DPI Support**: Optimized for retina/high-resolution displays
 - **Keyboard Navigation**: Arrow keys for pages, +/- for zoom
 - **Privacy Focused**: All PDFs processed locally in the browser
@@ -79,6 +80,14 @@ Toggle display of units using checkboxes:
 Select coordinate origin:
 - **Bottom-Left (PDF)**: PDF coordinate system (Y increases upward)
 - **Top-Left (Screen)**: Default screen coordinate system (Y increases downward)
+
+### Font Detection
+
+Click anywhere on the PDF to detect font information at that position:
+- **Font Size**: Size of the font in points
+- **Font Family**: Name of the font family
+- **Font Name**: Internal PDF font identifier
+- **Position**: Coordinates where font was detected
 
 ## Technical Details
 

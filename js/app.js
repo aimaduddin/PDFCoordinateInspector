@@ -113,6 +113,7 @@ const App = {
     document.getElementById('zoom-100').addEventListener('click', () => this.setZoom(1));
     document.getElementById('zoom-fit').addEventListener('click', () => this.fitToWidth());
     document.getElementById('reset-view').addEventListener('click', () => this.resetView());
+    document.getElementById('upload-new').addEventListener('click', () => this.uploadNew());
   },
 
   async changePage(delta) {
@@ -149,6 +150,18 @@ const App = {
     PDFRenderer.setScale(1);
     document.getElementById('page-input').value = 1;
     await this.renderCurrentPage();
+  },
+
+  uploadNew() {
+    PDFRenderer.reset();
+    document.getElementById('viewer-section').classList.add('hidden');
+    document.getElementById('upload-section').classList.remove('hidden');
+    document.getElementById('file-input').value = '';
+    document.getElementById('page-count').textContent = '-';
+    document.getElementById('page-size').textContent = '-';
+    document.getElementById('page-rotation').textContent = '0°';
+    document.getElementById('page-input').value = '';
+    document.getElementById('zoom-level').textContent = '100%';
   },
 
   showViewer() {

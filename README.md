@@ -6,6 +6,7 @@ A web-based tool for inspecting precise cursor coordinates within PDF documents.
 
 - **PDF Upload**: Drag-and-drop or click to upload PDF files (max 10 MB)
 - **Multi-page Support**: Navigate through pages with buttons, input, or keyboard arrows
+- **Upload New PDF**: Easy button to upload a different PDF without refreshing
 - **Zoom Controls**: Zoom in/out, fit to width, or reset to 100%
 - **Real-time Coordinates**: Hover over the PDF to see cursor position
 - **Multiple Units**: Display coordinates in px, pt, in, cm, mm, pc (selectable)
@@ -40,6 +41,7 @@ php -S localhost:8000
 
 - **Drag and drop**: Drag a PDF file onto the upload area
 - **Click to upload**: Click the upload area to open the file browser
+- **Upload New PDF**: Click the red "Upload New PDF" button to load a different file
 
 ### Viewing Coordinates
 
